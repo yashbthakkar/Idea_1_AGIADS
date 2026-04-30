@@ -1,0 +1,13 @@
+.env
+.env.local
+.env.*.local
+
+# Python cache/artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Streamlit/local editor artifacts
+.streamlit/secrets.toml
+.DS_Store
