@@ -228,38 +228,27 @@ if "temperature" not in st.session_state:
 if "max_tokens" not in st.session_state:
     st.session_state.max_tokens = int(os.getenv("MODEL_MAX_TOKENS", "512"))
 
+# Always refresh runtime config from .env (no UI controls for model setup).
+st.session_state.provider = os.getenv("API_PROVIDER", st.session_state.provider).strip() or "Groq"
+env_defaults = provider_defaults(st.session_state.provider)
+st.session_state.api_key = env_defaults["api_key"]
+st.session_state.model = env_defaults["model"]
+st.session_state.temperature = float(os.getenv("MODEL_TEMPERATURE", str(st.session_state.temperature)))
+st.session_state.max_tokens = int(os.getenv("MODEL_MAX_TOKENS", str(st.session_state.max_tokens)))
+
 
 st.title("Embedded Intelligent Annotation Assistant")
 st.caption("Context-aware real-time support for AGIDS-style annotation workflows.")
 
 with st.sidebar:
-    st.subheader("Model Setup")
-    old_provider = st.session_state.provider
-    st.session_state.provider = st.selectbox("Provider", ["Groq", "Gemini"], index=0 if st.session_state.provider == "Groq" else 1)
-    if old_provider != st.session_state.provider:
-        defaults = provider_defaults(st.session_state.provider)
-        st.session_state.api_key = defaults["api_key"]
-        st.session_state.model = defaults["model"]
-
+    st.subheader("Configuration")
+    st.caption("Model setup is loaded from `.env`.")
     provider_env = provider_defaults(st.session_state.provider)
-    if not st.session_state.api_key and provider_env["api_key"]:
-        st.session_state.api_key = provider_env["api_key"]
-    if not st.session_state.model and provider_env["model"]:
-        st.session_state.model = provider_env["model"]
+    st.session_state.api_key = provider_env["api_key"]
+    st.session_state.model = provider_env["model"]
+    st.caption(f"Provider: {st.session_state.provider}")
+    st.caption(f"Model: {st.session_state.model}")
 
-    st.session_state.api_key = st.text_input("API Key", value=st.session_state.api_key, type="password")
-
-    if st.session_state.provider == "Groq":
-        st.session_state.model = st.text_input("Model", value=st.session_state.model or "llama-3.3-70b-versatile")
-        st.caption("From .env: GROQ_API_KEY, GROQ_MODEL")
-    else:
-        default_gemini = "gemini-1.5-flash"
-        current = st.session_state.model if "gemini" in st.session_state.model.lower() else default_gemini
-        st.session_state.model = st.text_input("Model", value=current)
-        st.caption("From .env: GEMINI_API_KEY, GEMINI_MODEL")
-
-    st.session_state.temperature = st.slider("Temperature", 0.0, 1.0, float(st.session_state.temperature), 0.05)
-    st.session_state.max_tokens = st.slider("Max output tokens", 128, 2048, int(st.session_state.max_tokens), 64)
     if st.button("Clear Chat"):
         st.session_state.chat = []
         st.rerun()
